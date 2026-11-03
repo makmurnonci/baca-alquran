@@ -60,6 +60,7 @@ svg.ch{width:100%;height:auto;display:block}
   .card,.kpi{break-inside:avoid;box-shadow:none}
   #all td:last-child,#all th:last-child{display:none}
 }
+#uo pre{background:#f1f5f4;padding:10px;border-radius:6px;overflow-x:auto;user-select:all;white-space:pre-wrap;word-break:break-all}
 .btn.sm{padding:4px 12px;font-size:13px}
 .empty{color:var(--mut);padding:12px 0}
 @media(max-width:560px){.row{grid-template-columns:60px 1fr}.row .v{grid-column:1/-1}}
@@ -73,7 +74,12 @@ svg.ch{width:100%;height:auto;display:block}
 </div></header>
 <main><div class="w">
 
-<section id="isi" class="on"><div class="card">
+<section id="isi" class="on">
+<div class="card" id="setup" hidden><h2>Hubungkan ke Google Sheets</h2>
+<p class="hint">Dashboard masih mode demo. Tempel Web App URL dari Apps Script (disalin utuh, berakhiran /exec), lalu tes koneksinya.</p>
+<input id="u" style="width:100%" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+<p><button class="btn" id="tes" type="button">Tes koneksi</button></p><div id="uo"></div></div>
+<div class="card">
 <h2>Form data guru</h2>
 <form id="f">
 <label>Bulan<input name="bulan" type="month" required></label>
@@ -105,9 +111,10 @@ svg.ch{width:100%;height:auto;display:block}
 </div></main>
 <div id="toast" role="status"></div>
 
+<script src="config.js"></script>
 <script>
-// Isi dengan URL Web App dari Google Apps Script (lihat README). Kosong = mode demo (data hanya di browser ini).
-const API_URL = 'https://script.google.com/macros/s/AKfycbx82Bdumn96GRjiWhp6kb1L-Wr4nSkx0wZWYiviapAd7Wpur9CrnqU-EfJ5DNamrqIDXg/exec';
+// URL Web App dibaca dari config.js. Kosong = mode demo (data hanya di browser ini).
+const API_URL = (window.API_URL || 'https://script.google.com/macros/s/AKfycby2wSLo4CAShFf_RV6Lkxyqe0VgEEQJ6Oy0EdmKBlbbOQFM_Va4jZDutDa8wpv5Hi0ScA/exec').trim();
 
 const $ = s => document.querySelector(s), f = $('#f');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -257,6 +264,21 @@ $('#csv').onclick = () => {
   a.download = 'rekap-baca-quran.csv'; a.click();
 };
 
+if (!API_URL) $('#setup').hidden = false;
+$('#tes').onclick = async () => {
+  const u = $('#u').value.trim(), o = $('#uo');
+  if (u.includes('...') || !/^https:\/\/script\.google\.com\/.+\/exec$/.test(u)) {
+    o.textContent = 'URL belum benar. Salin Web App URL utuh dari Apps Script (Deploy > Manage deployments). Tanda titik tiga hanya contoh, dan URL harus berakhiran /exec.'; return;
+  }
+  o.textContent = 'Menguji koneksi...';
+  try {
+    if (!Array.isArray(await (await fetch(u)).json())) throw 0;
+    o.innerHTML = 'Berhasil terhubung. Salin baris ini, lalu tempel menggantikan isi <b>config.js</b> di GitHub (Edit > Commit changes):<pre></pre>';
+    o.querySelector('pre').textContent = "window.API_URL = '" + u + "';";
+  } catch (e) {
+    o.textContent = 'Tidak bisa terhubung. Di Apps Script, pastikan Who has access = Anyone dan sudah memilih New version saat Deploy.';
+  }
+};
 f.bulan.value = new Date().toISOString().slice(0, 7);
 try { const w = JSON.parse(localStorage.getItem('btq_who')); if (w) { f.sekolah.value = w[0]; f.guru.value = w[1]; } } catch (_) {}
 load();
