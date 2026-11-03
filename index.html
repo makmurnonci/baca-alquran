@@ -114,7 +114,7 @@ svg.ch{width:100%;height:auto;display:block}
 <script src="config.js"></script>
 <script>
 // URL Web App dibaca dari config.js. Kosong = mode demo (data hanya di browser ini).
-const API_URL = (window.API_URL || 'https://script.google.com/macros/s/AKfycbxfFqMdAi1LhQAVKmgraC_ajsNnSiNFPVk3Ezm-VE1yd7nBS8uDQFsUpWQj8r_PTvO6wg/exec').trim();
+const API_URL = (window.API_URL || '').trim();
 
 const $ = s => document.querySelector(s), f = $('#f');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
