@@ -135,6 +135,9 @@ document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
   b.classList.add('on'); $('#' + b.dataset.t).classList.add('on');
 });
 
+const why = e => { const m = String(e && e.message || e);
+  return /Failed to fetch|NetworkError|Load failed/i.test(m) ? 'browser tidak bisa menjangkau Google. Cek akses deploy ("Siapa saja"), URL, atau koneksi/ekstensi browser'
+    : /JSON|Unexpected token/i.test(m) ? 'Google membalas halaman login, bukan data. Akses deploy belum "Siapa saja", atau URL berasal dari proyek lain' : m; };
 let lastErr = '';
 async function load() {
   let ok = true;
@@ -144,7 +147,7 @@ async function load() {
       if (!Array.isArray(d)) throw new Error(d && d.error ? d.error : 'respons tidak dikenali');
       rows = d;
     } else rows = JSON.parse(localStorage.getItem('btq') || '[]');
-  } catch (e) { ok = false; rows = []; lastErr = e.message; toast('Gagal memuat data: ' + e.message, 1); }
+  } catch (e) { ok = false; rows = []; lastErr = why(e); toast('Gagal memuat data: ' + lastErr, 1); }
   rows.forEach(r => { NUM.forEach(k => r[k] = +r[k] || 0); r.bulan = String(r.bulan || '').slice(0, 7); });
   rows = rows.filter(r => r.bulan);
   if (API_URL && /\/exec$/.test(API_URL)) $('#mode').textContent = ok ? 'Terhubung ke Google Sheets' : 'Belum terhubung: ' + lastErr;
@@ -281,11 +284,12 @@ $('#tes').onclick = async () => {
   }
   o.textContent = 'Menguji koneksi...';
   try {
-    if (!Array.isArray(await (await fetch(u)).json())) throw 0;
+    const d = await (await fetch(u)).json();
+    if (!Array.isArray(d)) throw new Error(d && d.error ? 'skrip melaporkan error: ' + d.error : 'respons tidak dikenali');
     o.innerHTML = 'Berhasil terhubung. Salin baris ini, lalu tempel menggantikan isi <b>config.js</b> di GitHub (Edit > Commit changes):<pre></pre>';
     o.querySelector('pre').textContent = "window.API_URL = '" + u + "';";
   } catch (e) {
-    o.textContent = 'Tidak bisa terhubung. Di Apps Script, pastikan Who has access = Anyone dan sudah memilih New version saat Deploy.';
+    o.textContent = 'Gagal: ' + why(e) + '.';
   }
 };
 f.bulan.value = new Date().toISOString().slice(0, 7);
